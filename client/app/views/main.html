@@ -1,9 +1,14 @@
-<div class="hero-unit">
-  <h1>'Allo, 'Allo!</h1>
-  <p>You now have</p>
-  <ul>
-      <li ng-repeat="thing in awesomeThings">{{thing}}</li>
-  </ul>
-  <p>installed.</p>
-  <h3>Enjoy coding! - Yeoman</h3>
+<div class="row">
+  <div class="span8">
+    <table class="table">
+      <thead>
+        <tr><th>Room</th></tr>
+      </thead>
+      <tbody>
+        <tr ng-repeat="room in rooms"><td>{{room}}</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <div class="span4">
+</div>
 </div>
