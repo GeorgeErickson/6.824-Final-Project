@@ -1,6 +1,7 @@
 package hub
 
 import "fmt"
+import "server/document"
 
 // hub maintains the set of active connections and broadcasts messages to the
 // connections.
@@ -16,6 +17,8 @@ type Hub struct {
 
 	// Unregister requests from connections.
 	Unregister chan *Connection
+
+	Document: document.Document
 }
 
 func (h *Hub) Run() {
