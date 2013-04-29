@@ -17,12 +17,7 @@ import (
 
 /*
 ToDO:
-Each document needs its own hub to manage connections
-need a global mapping of documents to hubs, each one needs to run
-modify hub to handle documents and edits
-copy for chats
-
-should make seperate document hubs and chat hubs
+Integrate messaging protocol and document change protocol
 */
 func parseTemplate(file string, data interface{}) (out []byte, error error) {
         var buf bytes.Buffer
