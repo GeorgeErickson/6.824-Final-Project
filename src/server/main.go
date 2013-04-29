@@ -12,6 +12,7 @@ import (
     "encoding/json"
     "io"
     "server/hub"
+    "server/document"
 )
 
 /*
@@ -53,8 +54,8 @@ func serveWs(ctx *web.Context) {
 		log.Println(err)
 		return
 	}
-	c := &hub.Connection{Send: make(chan []byte, 256), Ws: ws, H:h}
-	h.Register <- c
+	c := &hub.Connection{Send: make(chan []byte, 256), Ws: ws, H:mainHub}
+	mainHub.Register <- c
 	go c.WritePump()
 	c.ReadPump()
 }
@@ -76,42 +77,46 @@ func documentStream(ctx *web.Context, documentId string) {
         log.Println(err)
         return
     }
-    c, err := redis.Dial("tcp", ":6379")
+    redis_conn, err := redis.Dial("tcp", ":6379")
     if err != nil {
         panic(err)
     }
-    defer c.Close()
-    s, err := redis.String(c.Do("GET", documentId))
+    defer redis_conn.Close()
+    s, err := redis.String(redis_conn.Do("GET", documentId))
     //make new document at that stringId
-    if err {
-        doc := document.newDoc(documentId)
-        c := &hub.Connection{Send: make(chan []byte, 256), Ws: ws, H:h}
-        document_hubs[doc.Name] = hub.Hub{
+    if err != nil {
+        doc := document.NewDoc(documentId)
+        document_hubs[doc.Name] = hub.DocumentHub{
                                     Document:    doc,
                                     Broadcast:   make(chan []byte),
-                                    Register:    make(chan *hub.Connection),
-                                    Unregister:  make(chan *hub.Connection),
-                                    Connections: make(map[*hub.Connection]bool),
+                                    Register:    make(chan *hub.DocumentConnection),
+                                    Unregister:  make(chan *hub.DocumentConnection),
+                                    Connections: make(map[*hub.DocumentConnection]bool),
                                 }
+        h := document_hubs[doc.Name]
+        go h.Run()
+        json_bytes, _ := json.Marshal(doc)
+        redis_conn.Do("SET", documentId, string(json_bytes))
+        c := &hub.DocumentConnection{Send: make(chan []byte, 256), Ws: ws, H:document_hubs[doc.Name]}
         document_hubs[doc.Name].Register <- c
         go c.WritePump()
         c.ReadPump()
     } else{
         var doc document.Document
+        fmt.Println(s)
         err := json.Unmarshal([]byte(s), &doc)
         if err != nil {
-            fmt.Println("error:", err)
+            fmt.Println("Error:", err, s)
         }
-        c := &hub.Connection{Send: make(chan []byte, 256), Ws: ws, H:h}
+        c := &hub.DocumentConnection{Send: make(chan []byte, 256), Ws: ws, H:document_hubs[doc.Name]}
         document_hubs[doc.Name].Register <- c
         go c.WritePump()
         c.ReadPump()
     }
-    
 }
 
 // serverWs handles websocket requests from the client for a particular chat
-func chatStream(ctx *web.Context, chatId string) {
+func chatStream(ctx *web.Context, documentId string) {
     w := ctx.ResponseWriter
     r := ctx.Request
     if r.Header.Get("Origin") != "http://"+r.Host {
@@ -127,10 +132,39 @@ func chatStream(ctx *web.Context, chatId string) {
         log.Println(err)
         return
     }
-    c := &hub.Connection{Send: make(chan []byte, 256), Ws: ws, H:h}
-    h.Register <- c
-    go c.WritePump()
-    c.ReadPump()
+    redis_conn, err := redis.Dial("tcp", ":6379")
+    if err != nil {
+        panic(err)
+    }
+    defer redis_conn.Close()
+    s, err := redis.String(redis_conn.Do("GET", documentId))
+    //make new document at that stringId
+    if err != nil {
+        doc := document.NewDoc(documentId)
+        chat_hubs[doc.Name] = hub.ChatHub{
+                                    Document:    doc,
+                                    Broadcast:   make(chan []byte),
+                                    Register:    make(chan *hub.ChatConnection),
+                                    Unregister:  make(chan *hub.ChatConnection),
+                                    Connections: make(map[*hub.ChatConnection]bool),
+                                }
+        h := chat_hubs[doc.Name]
+        go h.Run()
+        c := &hub.ChatConnection{Send: make(chan []byte, 256), Ws: ws, H:chat_hubs[doc.Name]}
+        chat_hubs[doc.Name].Register <- c
+        go c.WritePump()
+        c.ReadPump()
+    } else{
+        var doc document.Document
+        err := json.Unmarshal([]byte(s), &doc)
+        if err != nil {
+            fmt.Println("error:", err)
+        }
+        c := &hub.ChatConnection{Send: make(chan []byte, 256), Ws: ws, H:chat_hubs[doc.Name]}
+        chat_hubs[doc.Name].Register <- c
+        go c.WritePump()
+        c.ReadPump()
+    }
 }
 
 
@@ -167,47 +201,84 @@ var mainHub = hub.Hub{
 		Connections: make(map[*hub.Connection]bool),
 	}
 
-func setup() map[string]Hub {
-    document_hubs := map[string]Hub{}
+func setupDocuments() map[string]hub.DocumentHub {
+    d_hubs := map[string]hub.DocumentHub{}
     c, err := redis.Dial("tcp", ":6379")
     if err != nil {
         panic(err)
     }
     defer c.Close()
     s, err := redis.Strings(c.Do("KEYS", "*"))
-    var documents map[string]Document
+    var documents = map[string]document.Document{}
     for _,str := range s {
         jdoc, err := redis.String(c.Do("GET", str))
-        var doc Document
-        err := json.Unmarshal([]byte(jdoc), &doc)
-        if err != nil {
-            fmt.Println("error:", err)
+        var doc document.Document
+        error := json.Unmarshal([]byte(jdoc), &doc)
+        if error != nil {
+            fmt.Println("Document setup error:", err)
+        }
+        documents[doc.Name] = doc
+        fmt.Println("Document: ", doc.Name)
+    }
+    for _, doc := range documents {
+        var h = hub.DocumentHub{
+            Document:    doc,
+            Broadcast:   make(chan []byte),
+            Register:    make(chan *hub.DocumentConnection),
+            Unregister:  make(chan *hub.DocumentConnection),
+            Connections: make(map[*hub.DocumentConnection]bool),
+        }
+        go h.Run()
+        d_hubs[doc.Name] = h
+    }
+    return d_hubs
+}
+
+func setupChats() map[string]hub.ChatHub {
+    d_hubs := map[string]hub.ChatHub{}
+    c, err := redis.Dial("tcp", ":6379")
+    if err != nil {
+        panic(err)
+    }
+    defer c.Close()
+    s, err := redis.Strings(c.Do("KEYS", "*"))
+    var documents = map[string]document.Document{}
+    for _,str := range s {
+        jdoc, err := redis.String(c.Do("GET", str))
+        var doc document.Document
+        error := json.Unmarshal([]byte(jdoc), &doc)
+        if error != nil {
+            fmt.Println("chat setup error:", err)
         }
         documents[doc.Name] = doc
     }
     for _, doc := range documents {
-        var h = hub.Hub{
+        var h = hub.ChatHub{
             Document:    doc,
             Broadcast:   make(chan []byte),
-            Register:    make(chan *hub.Connection),
-            Unregister:  make(chan *hub.Connection),
-            Connections: make(map[*hub.Connection]bool),
+            Register:    make(chan *hub.ChatConnection),
+            Unregister:  make(chan *hub.ChatConnection),
+            Connections: make(map[*hub.ChatConnection]bool),
         }
         go h.Run()
-        document_hubs[doc.name] = h
+        d_hubs[doc.Name] = h
     }
-    return document_hubs
+    return d_hubs
 }
+
+var document_hubs = map[string]hub.DocumentHub{}
+var chat_hubs = map[string]hub.ChatHub{}
 
 func main() {
     go mainHub.Run()
-    document_hubs = setup()
+    document_hubs = setupDocuments()
+    chat_hubs = setupChats()
 	web.Config.Addr = "127.0.0.1"
 	web.Config.Port = 8000
     web.Get("/", home)
     web.Get("/ws", serveWs)
     web.Get("/rest/documents", getDocuments)
-    web.Get("/documents/(.*)/", documentStream)
-    web.Get("/chat/(.*)/", chatStream)
+    web.Get("/documents/(.*)", documentStream)
+    web.Get("/chat/(.*)", chatStream)
     web.Run("127.0.0.1:8000")
 }

@@ -4,6 +4,7 @@ import (
 	"github.com/garyburd/go-websocket/websocket"
 	"io/ioutil"
 	"time"
+	"fmt"
 )
 
 const (
@@ -51,6 +52,7 @@ func (c *Connection) ReadPump() {
 		case websocket.OpText:
 			message, err := ioutil.ReadAll(r)
 			if err != nil {
+				fmt.Println("ERROR!")
 				break
 			}
 			c.H.Broadcast <- message
@@ -66,6 +68,146 @@ func (c *Connection) Write(opCode int, payload []byte) error {
 
 // writePump pumps messages from the hub to the websocket connection.
 func (c *Connection) WritePump() {
+	ticker := time.NewTicker(pingPeriod)
+	defer func() {
+		ticker.Stop()
+		c.Ws.Close()
+	}()
+	for {
+		select {
+		case message, ok := <-c.Send:
+			if !ok {
+				c.Write(websocket.OpClose, []byte{})
+				return
+			}
+			if err := c.Write(websocket.OpText, message); err != nil {
+				return
+			}
+		case <-ticker.C:
+			if err := c.Write(websocket.OpPing, []byte{}); err != nil {
+				return
+			}
+		}
+	}
+}
+
+// DocumentConnection is an middleman between the websocket connection and the DocumentHub.
+type DocumentConnection struct {
+	// The websocket connection.
+	Ws *websocket.Conn
+
+	// Buffered channel of outbound messages.
+	Send chan []byte
+
+	//hub
+	H DocumentHub
+}
+
+// readPump pumps messages from the websocket connection to the hub.
+func (c *DocumentConnection) ReadPump() {
+	defer func() {
+		c.H.Unregister <- c
+		c.Ws.Close()
+	}()
+	c.Ws.SetReadLimit(maxMessageSize)
+	c.Ws.SetReadDeadline(time.Now().Add(readWait))
+	for {
+		op, r, err := c.Ws.NextReader()
+		if err != nil {
+			break
+		}
+		switch op {
+		case websocket.OpPong:
+			c.Ws.SetReadDeadline(time.Now().Add(readWait))
+		case websocket.OpText:
+			message, err := ioutil.ReadAll(r)
+			if err != nil {
+				fmt.Println("ERROR!")
+				break
+			}
+			c.H.Broadcast <- message
+		}
+	}
+}
+
+// write writes a message with the given opCode and payload.
+func (c *DocumentConnection) Write(opCode int, payload []byte) error {
+	c.Ws.SetWriteDeadline(time.Now().Add(writeWait))
+	return c.Ws.WriteMessage(opCode, payload)
+}
+
+// writePump pumps messages from the hub to the websocket connection.
+func (c *DocumentConnection) WritePump() {
+	ticker := time.NewTicker(pingPeriod)
+	defer func() {
+		ticker.Stop()
+		c.Ws.Close()
+	}()
+	for {
+		select {
+		case message, ok := <-c.Send:
+			if !ok {
+				c.Write(websocket.OpClose, []byte{})
+				return
+			}
+			if err := c.Write(websocket.OpText, message); err != nil {
+				return
+			}
+		case <-ticker.C:
+			if err := c.Write(websocket.OpPing, []byte{}); err != nil {
+				return
+			}
+		}
+	}
+}
+
+// connection is an middleman between the websocket connection and the hub.
+type ChatConnection struct {
+	// The websocket connection.
+	Ws *websocket.Conn
+
+	// Buffered channel of outbound messages.
+	Send chan []byte
+
+	//hub
+	H ChatHub
+}
+
+// readPump pumps messages from the websocket connection to the hub.
+func (c *ChatConnection) ReadPump() {
+	defer func() {
+		c.H.Unregister <- c
+		c.Ws.Close()
+	}()
+	c.Ws.SetReadLimit(maxMessageSize)
+	c.Ws.SetReadDeadline(time.Now().Add(readWait))
+	for {
+		op, r, err := c.Ws.NextReader()
+		if err != nil {
+			break
+		}
+		switch op {
+		case websocket.OpPong:
+			c.Ws.SetReadDeadline(time.Now().Add(readWait))
+		case websocket.OpText:
+			message, err := ioutil.ReadAll(r)
+			if err != nil {
+				fmt.Println("ERROR!")
+				break
+			}
+			c.H.Broadcast <- message
+		}
+	}
+}
+
+// write writes a message with the given opCode and payload.
+func (c *ChatConnection) Write(opCode int, payload []byte) error {
+	c.Ws.SetWriteDeadline(time.Now().Add(writeWait))
+	return c.Ws.WriteMessage(opCode, payload)
+}
+
+// writePump pumps messages from the hub to the websocket connection.
+func (c *ChatConnection) WritePump() {
 	ticker := time.NewTicker(pingPeriod)
 	defer func() {
 		ticker.Stop()

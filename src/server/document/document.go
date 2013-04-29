@@ -1,5 +1,6 @@
 package document
 
+import "time"
 
 // ShareJS is a key-value store mapping a document's name to a versioned document. Documents must be created before they can be used.
 // Each document has a type, a version, a snapshot and metadata.
@@ -26,6 +27,8 @@ type Document struct {
 	//Type
 	Type string
 	
+	Name string
+
 	//Version
 	Version int
 
@@ -35,6 +38,17 @@ type Document struct {
 	//metadata
 	Metadata Metadata
 
+}
+
+//constructor for instances
+func NewDoc(name string) Document {
+  doc := Document{}
+  doc.Type = "Text"
+  doc.Name = name
+  doc.Version = 0
+  doc.Snapshot = ""
+  doc.Metadata = Metadata{Creator:"", Ctime:time.Now(), Mtime:time.Now(), Sessions: map[string]Session{}}
+  return doc
 }
 
 // Version: A version number counting from 0
@@ -53,8 +67,8 @@ type Document struct {
 
 type Metadata struct {
 	Creator string
-	Ctime time
-	Mtime time
+	Ctime time.Time
+	Mtime time.Time
 	Sessions map[string]Session
 }
 
@@ -62,3 +76,5 @@ type Session struct {
 	Name string
 	Cursor int
 }
+
+

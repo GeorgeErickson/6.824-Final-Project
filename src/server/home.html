@@ -19,23 +19,30 @@
     }
 
     $("#form").submit(function() {
-        if (!conn) {
+        if (!docConn) {
             return false;
         }
         if (!msg.val()) {
             return false;
         }
-        conn.send(msg.val());
+        docConn.send(msg.val());
         msg.val("");
         return false
     });
 
     if (window["WebSocket"]) {
-        conn = new WebSocket("ws://{{.Url}}:{{.Port}}/ws");
-        conn.onclose = function(evt) {
+        mainConn = new WebSocket("ws://{{.Url}}:{{.Port}}/ws");
+        mainConn.onclose = function(evt) {
             appendLog($("<div><b>Connection closed.</b></div>"))
         }
-        conn.onmessage = function(evt) {
+        mainConn.onmessage = function(evt) {
+            appendLog($("<div/>").text(evt.data))
+        }
+        docConn = new WebSocket("ws://{{.Url}}:{{.Port}}/documents/newDoc");
+        docConn.onclose = function(evt) {
+            appendLog($("<div><b>docConn Connection closed.</b></div>"))
+        }
+        docConn.onmessage = function(evt) {
             appendLog($("<div/>").text(evt.data))
         }
     } else {
