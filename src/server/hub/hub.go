@@ -2,6 +2,7 @@ package hub
 
 import "fmt"
 import "server/document"
+import "encoding/json"
 
 // hub maintains the set of active connections and broadcasts messages to the
 // connections.
@@ -81,6 +82,7 @@ func (h *Hub) Run() {
 }
 
 //Make the call to update the document object and propigate the results to other users
+//{"OpData":[{"Insert":"abc", "Position":0}],"Type":"Text","Name":"newDoc","Version":0,"Snapshot":"","Metadata":{"Creator":"","Ctime":"2013-04-29T14:59:36.346073-04:00","Mtime":"2013-04-29T14:59:36.346074-04:00","Sessions":{}}}
 func (h *DocumentHub) Run() {
 	for {
 		select {
@@ -92,10 +94,19 @@ func (h *DocumentHub) Run() {
 			delete(h.Connections, c)
 			close(c.Send)
 		case m := <-h.Broadcast:
-			fmt.Println("Doc broadcast",m)
+			//this is where ops should be processed and then sent
+			//apparently this blocks? 
+			var doc document.Document
+        	err := json.Unmarshal(m, &doc)
+        	if err != nil {
+            	fmt.Println("Error:", err, string(m))
+        	}
+        	h.Document.ApplyOps(doc.OpData[0], doc.Version)
+        	h.Document.BumpVersion()
+        	json_bytes, _ := json.Marshal(h.Document)
 			for c := range h.Connections {
 				select {
-				case c.Send <- m:
+				case c.Send <- json_bytes:
 				default:
 					close(c.Send)
 					delete(h.Connections, c)

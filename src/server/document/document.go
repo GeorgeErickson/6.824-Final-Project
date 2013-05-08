@@ -1,22 +1,23 @@
 package document
 
 import "time"
+import "fmt"
 
 // ShareJS is a key-value store mapping a document's name to a versioned document. Documents must be created before they can be used.
-// Each document has a type, a version, a snapshot and metadata.
+// Each document has a type, a version, a Snapshot and metadata.
 // The document's type specifies a set of functions for interpreting and manipulating operations. 
 // You must set a document's type when it is created. After a document's type is set, it cannot be changed.
 // Each type has a unique string name -- for example, the plain text type is called 'text' and the JSON type is called 'json'.
 // More types will be added in time - in particular rich text. For details of how types work, see Types.
 // Document versions start at 0. The version is incremented each time an operation is applied.
 
-// The document's snapshot is the contents of the document at some particular version. 
-// For text documents, the snapshot is a string containing the document's contents. For JSON documents, the snapshot is a JSON object.
+// The document's Snapshot is the contents of the document at some particular version. 
+// For text documents, the Snapshot is a string containing the document's contents. For JSON documents, the Snapshot is a JSON object.
 // Document metadata is a JSON object containing some extra information about the document, including a list of active sessions
 // and a list of contributors. See Document Metadata for details.
-// For example, a text document might have the snapshot 'abc' at version 100. An operation [{i:'d', p:3}] 
+// For example, a text document might have the Snapshot 'abc' at version 100. An operation [{i:'d', p:3}] 
 // is applied at version 100 which inserts a 'd' at the end of the document. After this operation is applied, the
-// document has a snapshot at version 101 of 'abcd'.
+// document has a Snapshot at version 101 of 'abcd'.
 
 // When a document is first created, it has:
 // Version is set to 0
@@ -38,6 +39,10 @@ type Document struct {
 	//metadata
 	Metadata Metadata
 
+	//opdata for deserializing
+	//version info is important
+	OpData []TextOp
+
 }
 
 //constructor for instances
@@ -48,8 +53,102 @@ func NewDoc(name string) Document {
   doc.Version = 0
   doc.Snapshot = ""
   doc.Metadata = Metadata{Creator:"", Ctime:time.Now(), Mtime:time.Now(), Sessions: map[string]Session{}}
+  doc.OpData = []TextOp{}
   return doc
 }
+/*
+checkValidComponent = (c) ->
+  throw new Error 'component missing position field' if typeof c.p != 'number'
+
+  i_type = typeof c.i
+  d_type = typeof c.d
+  throw new Error 'component needs an i or d field' unless (i_type == 'string') ^ (d_type == 'string')
+
+  throw new Error 'position cannot be negative' unless c.p >= 0
+
+checkValidOp = (op) ->
+  checkValidComponent(c) for c in op
+  true
+
+text.apply = (Snapshot, op) ->
+  checkValidOp op
+  for component in op
+    if component.i?
+      Snapshot = strInject Snapshot, component.p, component.i
+    else
+      deleted = Snapshot[component.p...(component.p + component.d.length)]
+      throw new Error "Delete component '#{component.d}' does not match deleted text '#{deleted}'" unless component.d == deleted
+      Snapshot = Snapshot[...component.p] + Snapshot[(component.p + component.d.length)..]
+  
+  Snapshot
+*/
+func (doc *Document) ApplyOp(op TextOp) bool {
+	if(!doc.checkValidOp(op)){
+		return false
+	}
+	for _, component := range op {
+    	if component.Insert != "" {
+    		doc.Snapshot = doc.StrInject(doc.Snapshot, component.Position, component.Insert)
+    	} else{
+    		deleted := doc.Snapshot[component.Position:component.Position+len(component.Delete)]
+    		if(component.Delete != deleted){
+    			fmt.Println("OP ERROR!")
+    			return false
+    		}
+    		doc.Snapshot = doc.Snapshot[0:component.Position] + doc.Snapshot[component.Position+len(component.Delete):len(doc.Snapshot)]
+    	}
+	}
+	return true
+}
+
+func (doc *Document) ApplyOps(op TextOp, version int) bool {
+	last_op_index := doc.Version - version
+	if last_op_index > 25 {
+		return false
+	}
+	if last_op_index != 0 {
+		transform_ops := doc.OpData[last_op_index-1:]
+		for i := 0; i < len(transform_ops); i++ {
+			top := transform_ops[i]
+			op = op.transform(top)
+		}
+	}
+	err := doc.ApplyOp(op)
+	if err == false {
+		return false
+	}
+	doc.OpData = append(doc.OpData, op)
+	//don't let someone get more than 25 versions behind
+	if(len(doc.OpData) > 25){
+		doc.OpData = doc.OpData[1:]
+	}
+	return true
+}
+
+func (doc *Document) BumpVersion() {
+	doc.Version++
+}
+
+func (doc *Document) checkValidOp(op TextOp) bool {
+	for _, component := range op {
+		if(doc.checkValidComponent(component) == false){
+			return false
+		}
+	}
+	return true
+}
+
+func (doc *Document) checkValidComponent(component Component) bool {
+	if component.Position < 0 {
+		return false
+	}
+	return true
+}
+
+func (doc *Document) StrInject(Snapshot string, position int, inserted string) string {
+	return Snapshot[0:position]+inserted+Snapshot[position:len(Snapshot)]
+}
+
 
 // Version: A version number counting from 0
 // Snapshot: The current document contents
