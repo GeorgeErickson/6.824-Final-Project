@@ -3,6 +3,7 @@ package hub
 import "fmt"
 import "server/document"
 import "encoding/json"
+import "github.com/garyburd/redigo/redis"
 
 // hub maintains the set of active connections and broadcasts messages to the
 // connections.
@@ -81,14 +82,28 @@ func (h *Hub) Run() {
 	}
 }
 
+func (h *DocumentHub) Save(conn redis.Conn){
+	json_bytes, _ := json.Marshal(h.Document)
+	conn.Do("SET", h.Document.Name, string(json_bytes))
+}
+
 //Make the call to update the document object and propigate the results to other users
-//{"OpData":[{"Insert":"abc", "Position":0}],"Type":"Text","Name":"newDoc","Version":0,"Snapshot":"","Metadata":{"Creator":"","Ctime":"2013-04-29T14:59:36.346073-04:00","Mtime":"2013-04-29T14:59:36.346074-04:00","Sessions":{}}}
+//{"OpData":[[{"Insert":"abc", "Position":0}]],"Type":"Text","Name":"newDoc","Version":0,"Snapshot":"","Metadata":{"Creator":"","Ctime":"2013-04-29T14:59:36.346073-04:00","Mtime":"2013-04-29T14:59:36.346074-04:00","Sessions":{}}}
 func (h *DocumentHub) Run() {
+	redis_conn, err := redis.Dial("tcp", ":6379")
+    if err != nil {
+        panic(err)
+    }
+    //save document on close
+    defer h.Save(redis_conn)
+    defer redis_conn.Close()
 	for {
 		select {
 		case c := <-h.Register:
 			fmt.Println("Doc register")
 			h.Connections[c] = true
+			json_bytes, _ := json.Marshal(h.Document)
+			c.Send <- json_bytes
 		case c := <-h.Unregister:
 			fmt.Println("Doc unregister")
 			delete(h.Connections, c)
@@ -100,10 +115,18 @@ func (h *DocumentHub) Run() {
         	err := json.Unmarshal(m, &doc)
         	if err != nil {
             	fmt.Println("Error:", err, string(m))
+            	continue
         	}
-        	h.Document.ApplyOps(doc.OpData[0], doc.Version)
+        	error := h.Document.ApplyOps(doc.OpData[0], doc.Version)
+        	if !error {
+        		continue
+        	}
         	h.Document.BumpVersion()
-        	json_bytes, _ := json.Marshal(h.Document)
+        	ndoc := document.Document{Name:h.Document.Name, Version: h.Document.Version, Metadata:h.Document.Metadata, OpData:h.Document.OpData[len(h.Document.OpData)-(h.Document.Version-doc.Version):]}
+        	json_bytes, _ := json.Marshal(ndoc)
+		    if(h.Document.Version % 20 == 0){
+		    	h.Save(redis_conn)
+		    }
 			for c := range h.Connections {
 				select {
 				case c.Send <- json_bytes:

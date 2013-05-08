@@ -90,6 +90,10 @@ func (doc *Document) ApplyOp(op TextOp) bool {
     	if component.Insert != "" {
     		doc.Snapshot = doc.StrInject(doc.Snapshot, component.Position, component.Insert)
     	} else{
+    		if(len(doc.Snapshot) < component.Position || len(doc.Snapshot) < component.Position + len(component.Delete)){
+    			fmt.Println("OP ERROR!")
+    			return false
+    		}
     		deleted := doc.Snapshot[component.Position:component.Position+len(component.Delete)]
     		if(component.Delete != deleted){
     			fmt.Println("OP ERROR!")
