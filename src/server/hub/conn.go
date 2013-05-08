@@ -97,10 +97,15 @@ type DocumentConnection struct {
 	Ws *websocket.Conn
 
 	// Buffered channel of outbound messages.
-	Send chan []byte
+	Send chan Message
 
 	//hub
 	H DocumentHub
+}
+
+type Message struct {
+	Conn *DocumentConnection
+	M []byte
 }
 
 // readPump pumps messages from the websocket connection to the hub.
@@ -125,7 +130,8 @@ func (c *DocumentConnection) ReadPump() {
 				fmt.Println("ERROR!")
 				break
 			}
-			c.H.Broadcast <- message
+			mess := Message{M:message, Conn:c}
+			c.H.Broadcast <- mess
 		}
 	}
 }
@@ -150,7 +156,7 @@ func (c *DocumentConnection) WritePump() {
 				c.Write(websocket.OpClose, []byte{})
 				return
 			}
-			if err := c.Write(websocket.OpText, message); err != nil {
+			if err := c.Write(websocket.OpText, message.M); err != nil {
 				return
 			}
 		case <-ticker.C:

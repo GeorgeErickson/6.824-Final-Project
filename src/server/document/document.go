@@ -107,7 +107,7 @@ func (doc *Document) ApplyOp(op TextOp) bool {
 
 func (doc *Document) ApplyOps(op TextOp, version int) bool {
 	last_op_index := doc.Version - version
-	if last_op_index > 25 {
+	if last_op_index > 25  || doc.Version < version{
 		return false
 	}
 	if last_op_index != 0 {

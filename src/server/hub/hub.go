@@ -29,7 +29,7 @@ type DocumentHub struct {
 	Connections map[*DocumentConnection]bool
 
 	// Inbound messages from the connections.
-	Broadcast chan []byte
+	Broadcast chan Message
 
 	// Register requests from the connections.
 	Register chan *DocumentConnection
@@ -103,12 +103,14 @@ func (h *DocumentHub) Run() {
 			fmt.Println("Doc register")
 			h.Connections[c] = true
 			json_bytes, _ := json.Marshal(h.Document)
-			c.Send <- json_bytes
+			c.Send <- Message{M:json_bytes}
 		case c := <-h.Unregister:
 			fmt.Println("Doc unregister")
 			delete(h.Connections, c)
 			close(c.Send)
-		case m := <-h.Broadcast:
+		case mess := <-h.Broadcast:
+			m := mess.M
+			conn := mess.Conn
 			//this is where ops should be processed and then sent
 			//apparently this blocks? 
 			var doc document.Document
@@ -119,6 +121,8 @@ func (h *DocumentHub) Run() {
         	}
         	error := h.Document.ApplyOps(doc.OpData[0], doc.Version)
         	if !error {
+        		json_bytes, _ := json.Marshal(h.Document)
+        		conn.Send <- Message{M:json_bytes}
         		continue
         	}
         	h.Document.BumpVersion()
@@ -129,7 +133,7 @@ func (h *DocumentHub) Run() {
 		    }
 			for c := range h.Connections {
 				select {
-				case c.Send <- json_bytes:
+				case c.Send <- Message{M:json_bytes}:
 				default:
 					close(c.Send)
 					delete(h.Connections, c)

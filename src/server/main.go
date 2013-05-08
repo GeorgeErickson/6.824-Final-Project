@@ -83,7 +83,7 @@ func documentStream(ctx *web.Context, documentId string) {
         doc := document.NewDoc(documentId)
         document_hubs[doc.Name] = hub.DocumentHub{
                                     Document:    doc,
-                                    Broadcast:   make(chan []byte),
+                                    Broadcast:   make(chan hub.Message),
                                     Register:    make(chan *hub.DocumentConnection),
                                     Unregister:  make(chan *hub.DocumentConnection),
                                     Connections: make(map[*hub.DocumentConnection]bool),
@@ -92,7 +92,7 @@ func documentStream(ctx *web.Context, documentId string) {
         go h.Run()
         json_bytes, _ := json.Marshal(doc)
         redis_conn.Do("SET", documentId, string(json_bytes))
-        c := &hub.DocumentConnection{Send: make(chan []byte, 256), Ws: ws, H:document_hubs[doc.Name]}
+        c := &hub.DocumentConnection{Send: make(chan hub.Message, 256), Ws: ws, H:document_hubs[doc.Name]}
         document_hubs[doc.Name].Register <- c
         go c.WritePump()
         c.ReadPump()
@@ -103,7 +103,7 @@ func documentStream(ctx *web.Context, documentId string) {
         if err != nil {
             fmt.Println("Error:", err, s)
         }
-        c := &hub.DocumentConnection{Send: make(chan []byte, 256), Ws: ws, H:document_hubs[doc.Name]}
+        c := &hub.DocumentConnection{Send: make(chan hub.Message, 256), Ws: ws, H:document_hubs[doc.Name]}
         document_hubs[doc.Name].Register <- c
         go c.WritePump()
         c.ReadPump()
@@ -183,9 +183,8 @@ func getDocuments(ctx *web.Context){
     s, err := redis.Strings(c.Do("KEYS", "*"))
     fmt.Printf("%#v\n", s)
     var buf bytes.Buffer
-    for _,str := range s {
-        buf.Write([]byte(str))
-    }
+    json_bytes, _ := json.Marshal(s)
+    buf.Write(json_bytes)
     io.Copy(ctx, &buf)
 }
 
@@ -218,7 +217,7 @@ func setupDocuments() map[string]hub.DocumentHub {
     for _, doc := range documents {
         var h = hub.DocumentHub{
             Document:    doc,
-            Broadcast:   make(chan []byte),
+            Broadcast:   make(chan hub.Message),
             Register:    make(chan *hub.DocumentConnection),
             Unregister:  make(chan *hub.DocumentConnection),
             Connections: make(map[*hub.DocumentConnection]bool),
