@@ -18,8 +18,9 @@ Operational Transform encodes a document as a set of operations. An *operation* 
 Our system consists of a Go server that communicates with browser based clients. Operational Transform code is implemented in Coffeescript (compiles to javascript for the browser) as well as Go for the server.
 ## Operational Transform
 A text editor only allows insert, delete and retain operations, so we needed to implement 12 transformation functions to account for every type of conflict that might occur.
+
 ## Communication 
-The browser clients communicate with the server using web-sockets, which allow for fast realtime synchronization. 
+The browser clients communicate with the server using web-sockets, which allow for fast realtime synchronization. The server maintains a set of 'hubs' to manage incoming communications. There are two main kinds of hubs - DocumentHubs and ChatHubs. A ChatHub simply repeats every message it recieves to all subscribers. This performs the chat functionality on the site. DocumentHubs handle the incoming changes to the document. The client sends Operations, which consist of many components, to the corresponding DocumentHub. The DocumentHub then interprets the operation, checks which version it refers to, and either updates it with more recent operations or applies the corresponding transforms to the document. The server then sends the most recent operations that that client hasn't seen back to each client along with the updated version number. The DocumentHub manages a queue of incoming operations and always applies them in the order in which it receives them. If a client has been disconected for awhile or somehow falls behind in version numbers the server will either reject their ops if they are hopelessly behind (hopelessly == too much work) or update/transform their operations to make them applicable.
 
 #Difficulties
 1. **Cursor preservation** - When a clients text area is updated with modifications from the server, their cursor location is lost. It is not simple to determine where their cursor should now be located. If it were to be positioned at the same index as before, inserts could cause unintuitive results. 
