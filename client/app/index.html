@@ -16,37 +16,23 @@
         <!-- endbuild -->
     </head>
     <body>
-        <div class="container">
-            <div class="hero-unit">
-                <h1>'Allo, 'Allo!</h1>
-                <p>You now have</p>
-                <ul>
-                    <li>HTML5 Boilerplate</li>
-                    <li>jQuery</li>
-                    <li>Backbone.js</li>
-                    <li>Underscore.js</li>
-                    <li>RequireJS</li>
-                    <li>Twitter Bootstrap</li>
-                </ul>
-                <p>installed.</p>
-                <h3>Enjoy coding! - Yeoman</h3>
-            </div>
+        <div class="navbar">
+          <div class="navbar-inner">
+            <a class="brand" href="#">6.824 Collab Edit</a>
+          </div>
         </div>
+        <div class="container" id="app-main"></div>
 
         <!--[if lt IE 7]>
             <p class="chromeframe">You are using an <strong>outdated</strong> browser. Please <a href="http://browsehappy.com/">upgrade your browser</a> or <a href="http://www.google.com/chromeframe/?redirect=true">activate Google Chrome Frame</a> to improve your experience.</p>
         <![endif]-->
 
-        <!-- Google Analytics: change UA-XXXXX-X to be your site's ID. -->
-        <script>
-            var _gaq=[['_setAccount','UA-XXXXX-X'],['_trackPageview']];
-            (function(d,t){var g=d.createElement(t),s=d.getElementsByTagName(t)[0];
-            g.src=('https:'==location.protocol?'//ssl':'//www')+'.google-analytics.com/ga.js';
-            s.parentNode.insertBefore(g,s)}(document,'script'));
-        </script>
+        <script src="http://cdnjs.cloudflare.com/ajax/libs/thorax/2.0.0rc3/thorax.js"></script>
 
+        <script src="scripts/templates.js"></script>
         <!-- build:js scripts/main.js -->
         <script data-main="scripts/main" src="components/requirejs/require.js"></script>
         <!-- endbuild -->
+        <script src="//cdnjs.cloudflare.com/ajax/libs/ace/0.2.0/ace.js"></script>
 </body>
 </html>
