@@ -125,7 +125,6 @@ func (h *DocumentHub) Run() {
         		conn.Send <- Message{M:json_bytes}
         		continue
         	}
-        	h.Document.BumpVersion()
         	ndoc := document.Document{Name:h.Document.Name, Version: h.Document.Version, Metadata:h.Document.Metadata, OpData:h.Document.OpData[len(h.Document.OpData)-(h.Document.Version-doc.Version):]}
         	json_bytes, _ := json.Marshal(ndoc)
 		    if(h.Document.Version % 20 == 0){

@@ -126,6 +126,7 @@ func (doc *Document) ApplyOps(op TextOp, version int) bool {
 	if(len(doc.OpData) > 25){
 		doc.OpData = doc.OpData[1:]
 	}
+	doc.BumpVersion()
 	return true
 }
 

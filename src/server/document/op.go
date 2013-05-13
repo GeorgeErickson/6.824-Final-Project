@@ -44,6 +44,7 @@ func transformPosition(pos int, comp Component) (newpos int) {
   return
 }
 
+//this does not do what one thinks it would do
 func (op TextOp) Append(comp Component) {
   op = append(op, comp)
 }
@@ -56,11 +57,36 @@ func (comp1 Component) transform(dest *TextOp, comp2 Component) {
     if comp2.Insert != "" { // Delete vs Insert
       deleted := comp1.Delete
       if pos1 < comp2.Position {
-        (*dest).Append(Component{Position: comp1.Position, Delete:   deleted[:comp2.Position-pos1]})
+        // (*dest).Append(Component{Position: comp1.Position, Delete: deleted[:comp2.Position-pos1]})
+        (*dest).Append(Component{Position: comp1.Position, Delete: deleted[:comp2.Position-pos1]})
         deleted = deleted[comp2.Position-pos1:]
       }
       if deleted != "" {
-        (*dest).Append(Component{Position: comp1.Position+len(comp2.Insert), Delete: deleted})
+        //this code is all wrong
+        // (*dest).Append(Component{Position: comp1.Position+len(comp2.Insert), Delete: deleted})
+        // fmt.Println(*dest)
+        // comp1.Position = pos1 + len(comp2.Insert)
+        (*dest)[0] = Component{Position: comp1.Position+len(comp2.Insert), Delete: deleted}
+        // (*dest).Append(*dest, Component{Position: comp1.Position+len(comp2.Insert), Delete: deleted})
+      }
+    } else { //this may not be necessary?
+      if pos1 >= comp2.Position + len(comp2.Delete){
+        // (*dest).Append(Component{Delete:comp1.Delete, Position:comp1.Position - len(comp2.Delete)})
+        (*dest).Append(Component{Delete:comp1.Delete, Position:comp1.Position - len(comp2.Delete)})
+      } else if (pos1 + len(comp1.Delete) <= len(comp2.Delete)){
+        (*dest).Append(comp1)
+      } else{
+        newC := Component{Delete:"", Position:comp1.Position}
+        if comp1.Position < comp2.Position {
+          newC.Delete = comp1.Delete[:(comp2.Position - comp1.Position)]
+        }
+        if comp1.Position + len(comp1.Delete) > comp2.Position + len(comp2.Delete){
+          newC.Delete += comp1.Delete[(comp2.Position + len(comp2.Delete) - comp1.Position):]
+        }
+        if(newC.Delete != ""){
+          newC.Position = transformPosition(newC.Position, comp2)
+          (*dest).Append(newC)
+        }
       }
     }
   }
