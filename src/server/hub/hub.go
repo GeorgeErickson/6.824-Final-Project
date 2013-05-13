@@ -102,7 +102,8 @@ func (h *DocumentHub) Run() {
 		case c := <-h.Register:
 			fmt.Println("Doc register")
 			h.Connections[c] = true
-			json_bytes, _ := json.Marshal(h.Document)
+			ndoc := document.Document{Name:h.Document.Name, Version: h.Document.Version, Metadata:h.Document.Metadata, Snapshot:h.Document.Snapshot}
+			json_bytes, _ := json.Marshal(ndoc)
 			c.Send <- Message{M:json_bytes}
 		case c := <-h.Unregister:
 			fmt.Println("Doc unregister")

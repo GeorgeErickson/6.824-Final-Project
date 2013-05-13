@@ -1,7 +1,5 @@
 package document
 
-import "fmt"
-
 /*
 # Operations are lists of components.
 # Each component either inserts or deletes at a specified position in the document.
@@ -60,9 +58,8 @@ func (comp1 Component) transform(dest *TextOp, comp2 Component) {
       deleted := comp1.Delete
       if pos1 < comp2.Position {
         // (*dest).Append(Component{Position: comp1.Position, Delete: deleted[:comp2.Position-pos1]})
-        fmt.Println(comp2, comp1, deleted)
-        (*dest).Append(Component{Position: comp1.Position, Delete: deleted[:comp2.Position-pos1]})
-        deleted = deleted[comp2.Position-pos1:]
+        (*dest).Append(Component{Position: comp1.Position, Delete: deleted[:Min(comp2.Position-pos1,len(deleted))]})
+        deleted = deleted[Min(comp2.Position-pos1,len(deleted)):]
       }
       if deleted != "" {
         //this code is all wrong
@@ -103,4 +100,15 @@ func (op1 TextOp) transform(op2 TextOp) TextOp {
     }
   }
   return op1
+}
+
+func Min(a int, b int) int {
+  var min int
+  if a < b {
+    min = a
+  } else {
+    min = b
+  }
+  
+  return min
 }

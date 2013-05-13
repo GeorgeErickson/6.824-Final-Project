@@ -2,7 +2,6 @@ package document
 
 import (
 	"testing"
-	"fmt"
 )
 
 func newTestDocument() Document {
@@ -73,10 +72,10 @@ func TestDocumentConcurrentLeft(t *testing.T) {
 
 func TestConcurrentRight(t *testing.T) {
 	doc := newTestDocument()
-	target := "Haha this isho some text"
+	target := "Hahaho this is some text"
 	check := doc.Version
 	op1 := TextOp{Component{
-		Position: 14,
+		Position: 4,
 		Insert:   "ho",
 	}}
 	// Expecting Hahaho this is is some text
@@ -92,7 +91,38 @@ func TestConcurrentRight(t *testing.T) {
 	if err != true {
 		t.Errorf("Simple Operation failed (Error %q)", err)
 	}
-	fmt.Println(doc.Snapshot)
+	err = doc.ApplyOps(op2, check)
+	if err != true {
+		t.Errorf("Concurrent Right Operation failed (Error %q)", err)
+	}
+	result := doc.Snapshot
+	if result != target {
+		t.Errorf("Concurrent Right Operation failed %q != %q", result, target)
+	}
+
+}
+
+func TestConcurrentRight2(t *testing.T) {
+	doc := newTestDocument()
+	target := "Haha this isho some text"
+	check := doc.Version
+	op1 := TextOp{Component{
+		Position: 15,
+		Insert:   "ho",
+	}}
+	// Expecting Hahaho this is is some text
+	op2 := TextOp{Component{
+		Position: 7,
+		Delete: "is ",
+	}}
+	// Expecting Haha this is some text
+	// Combination of both should end up in Hahaho this is some text
+
+	//LEFT OP
+	err := doc.ApplyOps(op1, check)
+	if err != true {
+		t.Errorf("Simple Operation failed (Error %q)", err)
+	}
 	err = doc.ApplyOps(op2, check)
 	if err != true {
 		t.Errorf("Concurrent Right Operation failed (Error %q)", err)
