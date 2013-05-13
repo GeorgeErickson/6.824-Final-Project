@@ -2,6 +2,7 @@ package document
 
 import (
 	"testing"
+	"fmt"
 )
 
 func newTestDocument() Document {
@@ -91,6 +92,7 @@ func TestConcurrentRight(t *testing.T) {
 	if err != true {
 		t.Errorf("Simple Operation failed (Error %q)", err)
 	}
+	fmt.Println(doc.Snapshot)
 	err = doc.ApplyOps(op2, check)
 	if err != true {
 		t.Errorf("Concurrent Right Operation failed (Error %q)", err)
