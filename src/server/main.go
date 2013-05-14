@@ -275,5 +275,5 @@ func main() {
     web.Get("/rest/documents", getDocuments)
     web.Get("/documents/(.*)", documentStream)
     web.Get("/chat/(.*)", chatStream)
-    web.Run("127.0.0.1:8000")
+    web.Run("0.0.0.0:80")
 }
