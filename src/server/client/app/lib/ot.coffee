@@ -22,8 +22,8 @@ class OperationalTransform
   onmessage: (data) =>
     @suppress = true
     console.log data
-    # if data.count is 0
-    #   @editor.doc.setValue data.Snapshot
+    if data.count is 0
+      @editor.doc.setValue data.Snapshot
 
     @supress = false
     

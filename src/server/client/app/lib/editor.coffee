@@ -36,8 +36,8 @@ class Editor extends Backbone.View
   show: (model) ->
     @detachEvents()
     @ot.setModel model
-    snapshot = model.get 'Snapshot'
-    @editor.setValue snapshot
+
+
     @attachEvents()
     @$el.removeClass 'hide'
 
