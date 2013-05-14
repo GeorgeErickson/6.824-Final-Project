@@ -2,6 +2,7 @@ documents = require 'collections/Documents'
 app = new Backbone.Marionette.Application()
 loading = require 'views/Loading'
 editor = require 'lib/editor'
+chat = require 'lib/chat'
 
 class MainRouter extends Backbone.Router
   routes:
@@ -18,11 +19,13 @@ class MainRouter extends Backbone.Router
     app.content.reset()
     EditNav = require 'views/EditNav'
     editor.show model
+    chat.show model
     app.nav.show new EditNav
       model: model
     
   home: ->
     editor.hide()
+    chat.hide()
     app.nav.show require 'views/DefaultNav'
     app.content.show require 'views/DocumentList'
 
@@ -36,11 +39,6 @@ class MainRouter extends Backbone.Router
       documents.once 'sync', =>
         model = documents.get(doc_id)
         @_show_edit model
-
-
-
-
-    
 
   about: ->
     app.nav.show require 'views/DefaultNav'
