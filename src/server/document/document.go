@@ -153,7 +153,7 @@ func (doc *Document) checkValidComponent(component Component) bool {
 }
 
 func (doc *Document) StrInject(Snapshot string, position int, inserted string) string {
-	return Snapshot[0:position]+inserted+Snapshot[position:len(Snapshot)]
+	return Snapshot[0:Min(position,len(Snapshot))]+inserted+Snapshot[Min(position,len(Snapshot)):len(Snapshot)]
 }
 
 
