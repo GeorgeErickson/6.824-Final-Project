@@ -16,6 +16,7 @@ import (
     "server/document"
     "os"
     "strings"
+    "path/filepath"
 )
 
 /*
@@ -208,7 +209,8 @@ func chatStream(ctx *web.Context, documentId string) {
 
 
 func home(ctx *web.Context) { 
-    home, error := parseTemplate("client/public/index.html", map[string]string{"Url": ctx.Server.Config.Addr, "Port": strconv.Itoa(ctx.Server.Config.Port)})
+    template := filepath.Join(os.Getenv("GOPATH"), "src/server/client/public/index.html")
+    home, error := parseTemplate(template, map[string]string{"Url": ctx.Server.Config.Addr, "Port": strconv.Itoa(ctx.Server.Config.Port)})
     var buf bytes.Buffer
     if error != nil {
     	buf.Write([]byte(error.Error()))
@@ -325,7 +327,7 @@ func main() {
     fmt.Println(parts)
 	web.Config.Addr = parts[0]
 	web.Config.Port, _ = strconv.Atoi(parts[1])
-    web.Config.StaticDir = "client/public/"
+    web.Config.StaticDir = filepath.Join(os.Getenv("GOPATH"), "src/server/client/public")
     web.Get("/", home)
     web.Get("/ws", serveWs)
     web.Get("/rest/documents", getDocuments)
