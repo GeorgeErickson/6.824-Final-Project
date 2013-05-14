@@ -1,6 +1,7 @@
 documents = require 'collections/Documents'
 app = new Backbone.Marionette.Application()
 loading = require 'views/Loading'
+editor = require 'lib/editor'
 
 class MainRouter extends Backbone.Router
   routes:
@@ -14,14 +15,14 @@ class MainRouter extends Backbone.Router
     $el.find("[data-route=#{ route }]").addClass 'active'
   
   _show_edit: (model) ->
+    app.content.reset()
     EditNav = require 'views/EditNav'
-    DocumentEdit = require 'views/DocumentEdit'
-    app.content.show new DocumentEdit
-      model: model
+    editor.show model
     app.nav.show new EditNav
       model: model
     
   home: ->
+    editor.hide()
     app.nav.show require 'views/DefaultNav'
     app.content.show require 'views/DocumentList'
 
