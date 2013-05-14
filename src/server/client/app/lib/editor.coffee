@@ -23,7 +23,6 @@ class Editor extends Backbone.View
       else
         range.start.column
 
-    # Add the row number to include newlines.
     offset + range.start.row
 
   detachEvents: =>
