@@ -3,8 +3,12 @@ class Editor extends Backbone.View
   render: ->
     @$el.append '<div id="editor"></div>'
     @editor = ace.edit("editor")
+    @session = @editor.getSession()
 
-  show: ->
+
+  show: (model) ->
+    snapshot = model.get 'Snapshot'
+    @editor.setValue snapshot
     @$el.removeClass 'hide'
 
   hide: ->
