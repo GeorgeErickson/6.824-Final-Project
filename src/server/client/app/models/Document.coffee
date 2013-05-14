@@ -25,9 +25,6 @@ module.exports = class DocumentModel extends Backbone.Model
     if @ops.inflight or @ops.pending == null
       console.log @ops
       return
-    # unless @ops.inflight == null and @ops.pending != null
-    #   console.log @ops
-    #   return
 
     @ops.inflight = @ops.pending
     @ops.pending = null
@@ -61,5 +58,7 @@ module.exports = class DocumentModel extends Backbone.Model
 
         @trigger 'message', e.data
       @_ws.onclose = =>
+        @ops.inflight = null
+        @ops.pending = null
         @_ws = null
     @_ws

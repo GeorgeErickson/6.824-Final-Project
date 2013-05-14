@@ -12,7 +12,7 @@ class OperationalTransform
     
     snapshot = @model.get 'Snapshot'
     if snapshot
-      @editor.editor.setValue snapshot
+      @editor.editor.setValue snapshot, 1
 
     
     @listenTo model, 'message', @onmessage
@@ -30,7 +30,8 @@ class OperationalTransform
       pos -= lines[row].length + 1
 
     row:row, column:pos
-    
+  
+
   onmessage: (data) =>
     @quiet = true
     snapshot = @model.get 'Snapshot'
@@ -38,11 +39,14 @@ class OperationalTransform
       if data.Snapshot
         @editor.editor.setValue data.Snapshot
     if data.OpData
+      old_cursor = @editor.editor.getCursorPosition()
+      #@transformCursor old_cursor, data.OpData
       for ops in data.OpData
         for op in ops
           i = op.Insert
           d = op.Delete
           r = @posToRange op.Position
+  
           if i
             @editor.doc.insert r, i
           if d
