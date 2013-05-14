@@ -29,7 +29,7 @@ class Chat extends Backbone.View
 
   send: (msg) ->
     @last_message = msg
-    @ws.send(msg)
+    @ws.send_json msg
 
   onMessage: (msg) =>
     if msg.data == @last_message

@@ -74,6 +74,26 @@ func setDocumentTitle(ctx *web.Context, documentId string){
         h.Save(redis_conn)
         doc.ClientId = ndoc.ClientId
         json_bytes, _ := json.Marshal(doc)
+        mainHub.Broadcast <- json_bytes
+        buf.Write(json_bytes)
+        io.Copy(ctx, &buf)
+    } else{
+        ctx.Abort(404, "Document does not exist")
+        return
+    }
+}
+
+func deleteDocument(ctx *web.Context, documentId string){
+    redis_conn, _ := getRedis()
+    defer redis_conn.Close()
+    
+    //make new document at that stringId
+    if _, ok := document_hubs[documentId]; ok {
+        h := document_hubs[documentId]
+        var buf bytes.Buffer
+        doc := document.Document{Name:h.Document.Name, Title:h.Document.Title, Version: h.Document.Version}
+        redis_conn.Do("DEL", documentId)
+        json_bytes, _ := json.Marshal(doc)
         h.Broadcast <- hub.Message{M:json_bytes}
         buf.Write(json_bytes)
         io.Copy(ctx, &buf)
@@ -321,6 +341,7 @@ func main() {
     web.Get("/ws", serveWs)
     web.Get("/rest/documents", getDocuments)
     web.Put("/rest/documents/(.*)", setDocumentTitle)
+    web.Delete("/rest/documents/(.*)", deleteDocument)
     web.Get("/documents/(.*)", documentStream)
     web.Get("/chat/(.*)", chatStream)
     web.Run(host)
