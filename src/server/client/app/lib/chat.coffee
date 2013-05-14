@@ -28,16 +28,14 @@ class Chat extends Backbone.View
     @$('#chatinput').val ""
 
   send: (msg) ->
-    @last_message = msg
-    @ws.send_json msg
+    $('.chatFrame').append('<div class="bubble bubble--alt">'+msg+'</div>')
+    $('.chatFrame').scrollTop $('.chatFrame')[0].scrollHeight
+    @ws.send_json
+      text: msg
 
   onMessage: (msg) =>
-    if msg.data == @last_message
-      $('.chatFrame').append('<div class="bubble bubble--alt">'+msg.data+'</div>')
-      $('.chatFrame').scrollTop $('.chatFrame')[0].scrollHeight
-    else
-      $('.chatFrame').append('<div class="bubble">'+msg.data+'</div>')
-      $('.chatFrame').scrollTop $('.chatFrame')[0].scrollHeight
+    $('.chatFrame').append('<div class="bubble">'+msg.data.text+'</div>')
+    $('.chatFrame').scrollTop $('.chatFrame')[0].scrollHeight
 
   close: ->
     @$('.chatFrame').html("")

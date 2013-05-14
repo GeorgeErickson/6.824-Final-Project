@@ -11,7 +11,6 @@ class Documents extends Backbone.Collection
       unless @get e.data.Name
         @add e.data
 
-
   parse: (response, options) ->
     _.values response
 
