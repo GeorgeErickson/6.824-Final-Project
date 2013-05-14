@@ -8,7 +8,7 @@ class Documents extends Backbone.Collection
   initialize: ->
     @ws = websocket.create '/ws'
     @ws.onmessage = (e) =>
-      @add JSON.parse e.data
+      @add e.data
 
   parse: (response, options) ->
     _.values response
@@ -17,8 +17,9 @@ class Documents extends Backbone.Collection
     model = @_prepareModel model, options
     cws = websocket.create "/chat/#{ model.id }"
     @chats[model.id] = cws
-    model.getSocket().onmessage = (e) =>
-      @add JSON.parse e.data
+    model.once 'message', (data) =>
+      console.log data.Name
+      @add data
     cws.onmessage = (e) =>
       
 

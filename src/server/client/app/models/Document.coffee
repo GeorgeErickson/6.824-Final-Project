@@ -6,7 +6,7 @@ module.exports = class DocumentModel extends Backbone.Model
     ws = @getSocket()
     count = 0
     ws.onmessage = (e) =>
-      data = JSON.parse e.data
+      data = e.data
       data.count = count
       if data.Snapshot
         @set 'Snapshot', data.Snapshot

@@ -106,7 +106,11 @@ module.exports = class ReconnectingWebSocket
 
       @ws.onmessage = (event) =>
         console.debug "ReconnectingWebSocket", "onmessage", @url, event.data  if @debug
-        @onmessage event
+        parsed_event = _.clone event
+        data = JSON.parse event.data
+        parsed_event.data = data
+        unless data.ClientId is window.ClientId
+          @onmessage parsed_event
 
       @ws.onerror = (event) =>
         console.debug "ReconnectingWebSocket", "onerror", @url, event  if @debug
