@@ -12,7 +12,7 @@ class Documents extends Backbone.Collection
       unless doc
         @add e.data
       
-      console.log e.data, doc.get 'Title'
+
       if e.data.Title != doc.get 'Title'
         doc.set 'Title', e.data.Title
 

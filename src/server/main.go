@@ -249,14 +249,14 @@ var mainHub = hub.Hub{
 	}
 
 func getRedis() (redis.Conn, error) {
-    c, err := redis.Dial("tcp", "pub-redis-11830.us-east-1-4.1.ec2.garantiadata.com:11830")
+    c, err := redis.Dial("tcp", "127.0.0.1:6379")
     if err != nil {
         panic(err)
     }
-    if _, err := c.Do("AUTH", "davidgeorge"); err != nil {
-         c.Close()
-         return nil, err
-    }
+    // if _, err := c.Do("AUTH", "davidgeorge"); err != nil {
+    //      c.Close()
+    //      return nil, err
+    // }
     return c, err
 }
 

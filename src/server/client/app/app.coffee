@@ -16,6 +16,7 @@ class MainRouter extends Backbone.Router
     $el.find("[data-route=#{ route }]").addClass 'active'
   
   _show_edit: (model) ->
+    model.getSocket()
     app.content.reset()
     EditNav = require 'views/EditNav'
     editor.show model
@@ -30,7 +31,6 @@ class MainRouter extends Backbone.Router
     app.content.show require 'views/DocumentList'
 
   edit: (doc_id) ->
-    
     model = documents.get(doc_id)
     if model
       @_show_edit model
