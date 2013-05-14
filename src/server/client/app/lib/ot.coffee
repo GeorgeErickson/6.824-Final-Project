@@ -16,6 +16,8 @@ class OperationalTransform
 
     
     @listenTo model, 'message', @onmessage
+    @listenTo model, 'close', =>
+      @editor.editor.setValue ""
     @on 'insert', @oninsert
     @on 'remove', @onremove
 
@@ -67,7 +69,6 @@ class OperationalTransform
 
 
   onremove: (data) =>
-    console.log data
     op =
       Insert: ""
       Position: data.position

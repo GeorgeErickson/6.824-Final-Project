@@ -58,6 +58,7 @@ module.exports = class DocumentModel extends Backbone.Model
 
         @trigger 'message', e.data
       @_ws.onclose = =>
+        @trigger 'close'
         @ops.inflight = null
         @ops.pending = null
         @_ws = null
