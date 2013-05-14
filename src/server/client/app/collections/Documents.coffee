@@ -6,7 +6,6 @@ class Documents extends Backbone.Collection
   model: require 'models/Document'
   url: '/rest/documents'
   initialize: ->
-    console.log 'dddd'
     @ws = websocket.create '/ws'
     @ws.onmessage = (e) =>
       console.log e
