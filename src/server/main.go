@@ -13,6 +13,8 @@ import (
     "io"
     "server/hub"
     "server/document"
+    "os"
+    "strings"
 )
 
 /*
@@ -280,13 +282,22 @@ func main() {
     go mainHub.Run()
     document_hubs = setupDocuments()
     chat_hubs = setupChats()
-	web.Config.Addr = "0.0.0.0"
-	web.Config.Port = 8000
+    // Get hostname if specified
+    args := os.Args;
+    host := "0.0.0.0:8080"
+    if len(args) == 2 {
+        host = args[1]
+    }
+    parts := strings.Split(host, ":")
+    fmt.Println(parts)
+	web.Config.Addr = parts[0]
+	web.Config.Port, _ = strconv.Atoi(parts[1])
     web.Config.StaticDir = "client/public/"
     web.Get("/", home)
     web.Get("/ws", serveWs)
     web.Get("/rest/documents", getDocuments)
     web.Get("/documents/(.*)", documentStream)
     web.Get("/chat/(.*)", chatStream)
-    web.Run("0.0.0.0:8080")
+    web.Run(host)
+
 }
