@@ -4,8 +4,12 @@ module.exports = class DocumentModel extends Backbone.Model
   idAttribute: 'Name'
   initialize: ->
     ws = @getSocket()
+    count = 0
     ws.onmessage = (e) =>
-      @trigger 'message', JSON.parse e.data
+      data = JSON.parse e.data
+      data.count = count
+      @trigger 'message', data
+      count += 1
 
   send: (data) =>
     ws = @getSocket()

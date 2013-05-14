@@ -10,7 +10,7 @@ class DocumentList extends Backbone.Marionette.CompositeView
 
   create_new_document: ->
     model = @collection.create
-      id: Math.uuid(8, 16)
+      Name: Math.uuid(8, 16)
 
   initialize: ->
     @render()
