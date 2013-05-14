@@ -20,4 +20,4 @@ _cgo_export.*
 _testmain.go
 
 *.exe
-src/github.com
+src/github.com/
