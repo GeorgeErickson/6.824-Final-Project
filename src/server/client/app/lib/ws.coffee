@@ -48,6 +48,9 @@ Contributors:
 - Didier Colens
 - Wout Mertens
 ###
+window.ClientId = window.ClientId ? Math.uuid()
+
+
 module.exports = class ReconnectingWebSocket
   constructor: (url, protocols, Socket) ->
     if protocols? and typeof protocols is 'function'
@@ -118,6 +121,7 @@ module.exports = class ReconnectingWebSocket
   onerror: (event) ->
 
   send_json: (data) ->
+    data.ClientId = window.ClientId
     @send JSON.stringify data
 
   send: (data) ->
