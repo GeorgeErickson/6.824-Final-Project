@@ -49,7 +49,7 @@ class Editor extends Backbone.View
       data.text = data.lines.join('\n') + '\n'
 
     data.position = @getPosition data.range
-    console.log data.position
+
     switch data.action
       when "insertLines", "insertText" then @ot.trigger 'insert', data
       when "removeLines", "removeText" then @ot.trigger 'remove', data

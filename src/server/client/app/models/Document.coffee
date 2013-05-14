@@ -8,6 +8,8 @@ module.exports = class DocumentModel extends Backbone.Model
     ws.onmessage = (e) =>
       data = JSON.parse e.data
       data.count = count
+      if data.Snapshot
+        @set 'Snapshot', data.Snapshot
       @trigger 'message', data
       count += 1
 
