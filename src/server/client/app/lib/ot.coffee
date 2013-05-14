@@ -57,21 +57,18 @@ class OperationalTransform
       Insert: data.text
       Position: data.position
       Delete: ""
-    attributes = _.clone @model.attributes
-    attributes.OpData = [[op]]
+
     unless @quiet
-      @model.send attributes
+      @model.queue op
 
 
   ondelete: (data) ->
-    console.log data
     op =
       Insert: ""
       Position: data.position
       Delete: data.text
-    attributes = _.clone @model.attributes
-    attributes.OpData = [[op]]
+
     unless @quiet
-      @model.send attributes
+      @model.queue op
 
 module.exports = OperationalTransform
