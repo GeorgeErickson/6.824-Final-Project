@@ -182,8 +182,21 @@ func getDocuments(ctx *web.Context){
     defer c.Close()
     s, err := redis.Strings(c.Do("KEYS", "*"))
     fmt.Printf("%#v\n", s)
+    var documents = map[string]document.Document{}
+    for _,str := range s {
+        jdoc, err := redis.String(c.Do("GET", str))
+        var doc document.Document
+        error := json.Unmarshal([]byte(jdoc), &doc)
+        if error != nil {
+            fmt.Println("Document setup error:", err)
+        }
+        documents[doc.Name] = doc
+        fmt.Println("Document: ", doc.Name)
+    }
+
+
     var buf bytes.Buffer
-    json_bytes, _ := json.Marshal(s)
+    json_bytes, _ := json.Marshal(documents)
     buf.Write(json_bytes)
     io.Copy(ctx, &buf)
 }
