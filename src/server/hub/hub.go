@@ -131,7 +131,6 @@ func (h *DocumentHub) Run() {
         	}
         	fmt.Println(h.Document.Snapshot, doc)
         	error := h.Document.ApplyOps(doc.OpData[0], doc.Version)
-        	fmt.Println(h.Document.Snapshot)
         	if !error {
         		json_bytes, _ := json.Marshal(h.Document)
         		conn.Send <- Message{M:json_bytes}
