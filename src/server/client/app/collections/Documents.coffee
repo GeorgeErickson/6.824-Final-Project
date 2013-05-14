@@ -8,8 +8,13 @@ class Documents extends Backbone.Collection
   initialize: ->
     @ws = websocket.create '/ws'
     @ws.onmessage = (e) =>
-      unless @get e.data.Name
+      doc = @get e.data.Name
+      unless doc
         @add e.data
+      
+      console.log e.data, doc.get 'Title'
+      if e.data.Title != doc.get 'Title'
+        doc.set 'Title', e.data.Title
 
   parse: (response, options) ->
     _.values response
