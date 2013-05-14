@@ -1,22 +1,35 @@
+ot = require 'lib/ot'
+
 class Editor extends Backbone.View
   className: 'hide'
   render: ->
     @$el.append '<div id="editor"></div>'
     @editor = ace.edit("editor")
 
-  show: (model) ->
+  detachEvents: =>
     @editor.removeAllListeners 'change'
+
+  attachEvents: =>
+    @detachEvents()
+    @editor.on 'change', @onchange
+
+  show: (model) ->
+    @detachEvents()
     snapshot = model.get 'Snapshot'
     @editor.setValue snapshot
-    @editor.on 'change', @onchange
+    @attachEvents()
     @$el.removeClass 'hide'
 
   onchange: (e, editor) ->
     data = e.data
-    console.log data
+
+    switch data.action
+      when "insertLines", "insertText" then ot.trigger 'insert', data
+      when "removeLines", "removeText" then ot.trigger 'remove', data
 
   hide: ->
     @$el.addClass 'hide'
+
 
 editor = new Editor()
 editor.$el.appendTo 'body'
