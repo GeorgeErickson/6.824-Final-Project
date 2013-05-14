@@ -3,7 +3,7 @@ text = require 'lib/text'
 
 module.exports = class DocumentModel extends Backbone.Model
   idAttribute: 'Name'
-  version: null
+  version: 0
   ops:
     inflight: null
     pending: null
@@ -18,11 +18,16 @@ module.exports = class DocumentModel extends Backbone.Model
       @ops.pending = op
     else
       @ops.pending = text.compose @ops.pending, op
+    
     setTimeout @flush, 0
 
   flush: =>
     if @ops.inflight or @ops.pending == null
+      console.log @ops
       return
+    # unless @ops.inflight == null and @ops.pending != null
+    #   console.log @ops
+    #   return
 
     @ops.inflight = @ops.pending
     @ops.pending = null
@@ -30,6 +35,7 @@ module.exports = class DocumentModel extends Backbone.Model
     msg = _.clone @attributes
     msg.Version = @version
     msg.OpData = [@ops.inflight]
+    console.log msg
     @send msg
 
 
@@ -42,15 +48,16 @@ module.exports = class DocumentModel extends Backbone.Model
     unless @_ws
       @_ws = websocket.create "/documents/#{ @get 'Name' }"
       @_ws.onconfirm = (e) =>
-        console.log 'Confirm Message sent'
+        console.log 'confirmed'
         @version += 1
         @ops.inflight = null
+        @flush()
       @_ws.onmessage = (e) =>
         #Ignore Messages We have already seen
         if @version and @version >= e.data.version
           console.log 'This message has already been seen'
           return
-        @version = e.data.version
+        @version = e.data.Version
 
         @trigger 'message', e.data
       @_ws.onclose = =>

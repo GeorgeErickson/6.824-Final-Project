@@ -17,7 +17,7 @@ class OperationalTransform
     
     @listenTo model, 'message', @onmessage
     @on 'insert', @oninsert
-    @on 'delete', @ondelete
+    @on 'remove', @onremove
 
   posToRange: (pos) =>
     lines = @editor.doc.getAllLines()
@@ -46,7 +46,7 @@ class OperationalTransform
           if i
             @editor.doc.insert r, i
           if d
-            range = Range.fromPoints @posToRange(pos), @posToRange(pos + d.length)
+            range = Range.fromPoints r, @posToRange(op.Position + d.length)
             @editor.doc.remove range
     
     @quiet = false
@@ -62,7 +62,8 @@ class OperationalTransform
       @model.queue op
 
 
-  ondelete: (data) ->
+  onremove: (data) =>
+    console.log data
     op =
       Insert: ""
       Position: data.position
