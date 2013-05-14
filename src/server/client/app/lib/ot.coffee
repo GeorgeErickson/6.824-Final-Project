@@ -4,6 +4,7 @@ class OperationalTransform
     @editor = @options.editor
   
   setModel: (model) ->
+    @supress = false
     #unbind model events
     if @model
       @model.off null, @onmessage
@@ -18,20 +19,36 @@ class OperationalTransform
 
 
 
-  onmessage: (data) ->
+  onmessage: (data) =>
+    @suppress = true
+    console.log data
+    # if data.count is 0
+    #   @editor.doc.setValue data.Snapshot
+
+    @supress = false
     
   
   oninsert: (data) =>
+    if @supress
+      return
     op =
       Insert: data.text
       Position: data.position
       Delete: ""
     attributes = _.clone @model.attributes
     attributes.OpData = [[op]]
-    console.log @model.send attributes
+    @model.send attributes
 
 
   ondelete: (data) ->
-    console.log data
+    if @supress
+      return
+    op =
+      Insert: ""
+      Position: data.position
+      Delete: data.text
+    attributes = _.clone @model.attributes
+    attributes.OpData = [[op]]
+    @model.send attributes
 
 module.exports = OperationalTransform

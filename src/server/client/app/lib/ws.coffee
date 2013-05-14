@@ -135,7 +135,7 @@ module.exports = class ReconnectingWebSocket
   ###
   Setting this to true is the equivalent of setting all instances of ReconnectingWebSocket.debug to true.
   ###
-  debugAll: true
+  debugAll: false
   ###
   Additional public API method to refresh the connection if still open (close, re-open).
   For example, if the app suspects bad data / missed heart beats, it can try to refresh.
