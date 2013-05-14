@@ -3,11 +3,10 @@ module.exports = class EditNavView extends Backbone.Marionette.ItemView
   ui:
     title: "#title"
 
-  events:
-    'save #title': 'update_title'
 
-  update_title: ->
-    console.log arguments
+  initialize: ->
+    @model.on 'change:Title', =>
+      @render()
 
   onRender: =>
     @ui.title.editable
