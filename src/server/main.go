@@ -164,7 +164,7 @@ func chatStream(ctx *web.Context, documentId string) {
 
 
 func home(ctx *web.Context) { 
-    home, error := parseTemplate("home.html", map[string]string{"Url": ctx.Server.Config.Addr, "Port": strconv.Itoa(ctx.Server.Config.Port)})
+    home, error := parseTemplate("client/public/index.html", map[string]string{"Url": ctx.Server.Config.Addr, "Port": strconv.Itoa(ctx.Server.Config.Port)})
     var buf bytes.Buffer
     if error != nil {
     	buf.Write([]byte(error.Error()))
@@ -269,6 +269,7 @@ func main() {
     chat_hubs = setupChats()
 	web.Config.Addr = "127.0.0.1"
 	web.Config.Port = 8000
+    web.Config.StaticDir = "client/public/"
     web.Get("/", home)
     web.Get("/ws", serveWs)
     web.Get("/rest/documents", getDocuments)
