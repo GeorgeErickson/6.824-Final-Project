@@ -14,11 +14,10 @@ class Documents extends Backbone.Collection
     _.values response
 
   create: (model, options) =>
-    ws = websocket.create "/documents/#{ model.id }"
+    model = @_prepareModel model, options
     cws = websocket.create "/chat/#{ model.id }"
-    @sockets[model.id] = ws
     @chats[model.id] = cws
-    ws.onmessage = (e) =>
+    model.getSocket().onmessage = (e) =>
       @add JSON.parse e.data
     cws.onmessage = (e) =>
       
