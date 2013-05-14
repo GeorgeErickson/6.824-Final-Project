@@ -1,0 +1,9 @@
+golang:
+  type: custom
+  buildscript: golang/builder
+  processes:
+    server: ~/current/bin/server
+  ports:
+    www: http
+  config:
+      build_package: server
