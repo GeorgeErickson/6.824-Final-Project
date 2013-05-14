@@ -1,0 +1,7 @@
+{
+  "name": "p2p-collab-edit",
+  "version": "0.0.0",
+  "dependencies": {
+    "sass-bootstrap": "~2.3.1"
+  }
+}
