@@ -11,6 +11,7 @@ import (
     "fmt"
     "encoding/json"
     "io"
+    "io/ioutil"
     "server/hub"
     "server/document"
     "os"
@@ -56,6 +57,30 @@ func serveWs(ctx *web.Context) {
 	go c.WritePump()
 	c.ReadPump()
 }
+
+func setDocumentTitle(ctx *web.Context, documentId string){
+    redis_conn, _ := getRedis()
+    defer redis_conn.Close()
+    
+    //make new document at that stringId
+    if _, ok := document_hubs[documentId]; ok {
+        body, _ := ioutil.ReadAll(ctx.Request.Body)
+        var ndoc document.Document
+        json.Unmarshal(body, &ndoc)
+        h := document_hubs[documentId]
+        h.Document.Title = ndoc.Title
+        var buf bytes.Buffer
+        doc := document.Document{Name:h.Document.Name, Title:h.Document.Title, Version: h.Document.Version}
+        h.Save(redis_conn)
+        json_bytes, _ := json.Marshal(doc)
+        buf.Write(json_bytes)
+        io.Copy(ctx, &buf)
+    } else{
+        ctx.Abort(404, "Document does not exist")
+        return
+    }
+}
+
 
 // documentStream handles websocket requests from the client for a particular document
 func documentStream(ctx *web.Context, documentId string) {
@@ -293,6 +318,7 @@ func main() {
     web.Get("/", home)
     web.Get("/ws", serveWs)
     web.Get("/rest/documents", getDocuments)
+    web.Put("/rest/documents/(.*)", setDocumentTitle)
     web.Get("/documents/(.*)", documentStream)
     web.Get("/chat/(.*)", chatStream)
     web.Run(host)

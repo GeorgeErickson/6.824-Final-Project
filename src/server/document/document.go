@@ -1,6 +1,5 @@
 package document
 
-import "time"
 import "fmt"
 
 // ShareJS is a key-value store mapping a document's name to a versioned document. Documents must be created before they can be used.
@@ -30,14 +29,13 @@ type Document struct {
 	
 	Name string
 
+	Title string
+
 	//Version
 	Version int
 
 	//Snapshot
 	Snapshot string
-
-	//metadata
-	Metadata Metadata
 
 	//opdata for deserializing
 	//version info is important
@@ -50,9 +48,9 @@ func NewDoc(name string) Document {
   doc := Document{}
   doc.Type = "Text"
   doc.Name = name
+  doc.Title = ""
   doc.Version = 0
   doc.Snapshot = ""
-  doc.Metadata = Metadata{Creator:"", Ctime:time.Now(), Mtime:time.Now(), Sessions: map[string]Session{}}
   doc.OpData = []TextOp{}
   return doc
 }
@@ -168,17 +166,5 @@ func (doc *Document) StrInject(Snapshot string, position int, inserted string) s
 		// Cursor position(s) (type dependant - for text it'll be a number, for JSON it'll be a path)
 		// Connection time maybe?
 	// Any other application-specific data. This can be filled in by the auth function when a client connects. (And maybe clients should be able to edit this as well?)
-
-type Metadata struct {
-	Creator string
-	Ctime time.Time
-	Mtime time.Time
-	Sessions map[string]Session
-}
-
-type Session struct {
-	Name string
-	Cursor int
-}
 
 
