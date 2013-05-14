@@ -72,7 +72,7 @@ func documentStream(ctx *web.Context, documentId string) {
         log.Println(err)
         return
     }
-    redis_conn, err := redis.Dial("tcp", ":6379")
+    redis_conn, err := redis.Dial("tcp", "pub-redis-11830.us-east-1-4.1.ec2.garantiadata.com:11830")
     if err != nil {
         panic(err)
     }
@@ -197,7 +197,7 @@ var mainHub = hub.Hub{
 
 func setupDocuments() map[string]hub.DocumentHub {
     d_hubs := map[string]hub.DocumentHub{}
-    c, err := redis.Dial("tcp", ":6379")
+    c, err := redis.Dial("tcp", "pub-redis-11830.us-east-1-4.1.ec2.garantiadata.com:11830")
     if err != nil {
         panic(err)
     }
@@ -230,7 +230,7 @@ func setupDocuments() map[string]hub.DocumentHub {
 
 func setupChats() map[string]hub.ChatHub {
     d_hubs := map[string]hub.ChatHub{}
-    c, err := redis.Dial("tcp", ":6379")
+    c, err := redis.Dial("tcp", "pub-redis-11830.us-east-1-4.1.ec2.garantiadata.com:11830")
     if err != nil {
         panic(err)
     }
@@ -267,7 +267,7 @@ func main() {
     go mainHub.Run()
     document_hubs = setupDocuments()
     chat_hubs = setupChats()
-	web.Config.Addr = "127.0.0.1"
+	web.Config.Addr = "0.0.0.0"
 	web.Config.Port = 8000
     web.Config.StaticDir = "client/public/"
     web.Get("/", home)
