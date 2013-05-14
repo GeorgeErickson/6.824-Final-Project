@@ -34,6 +34,9 @@ type Document struct {
 	//Version
 	Version int
 
+	//clientId
+	ClientId string
+
 	//Snapshot
 	Snapshot string
 

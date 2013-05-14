@@ -13,6 +13,7 @@ class DocumentList extends Backbone.Marionette.CompositeView
       Name: Math.uuid(8, 16)
 
   initialize: ->
+    @listenTo @collection, "add", @render
     @render()
 
 module.exports = new DocumentList()

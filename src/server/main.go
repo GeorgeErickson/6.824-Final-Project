@@ -72,7 +72,9 @@ func setDocumentTitle(ctx *web.Context, documentId string){
         var buf bytes.Buffer
         doc := document.Document{Name:h.Document.Name, Title:h.Document.Title, Version: h.Document.Version}
         h.Save(redis_conn)
+        doc.ClientId = ndoc.ClientId
         json_bytes, _ := json.Marshal(doc)
+        h.Broadcast <- hub.Message{M:json_bytes}
         buf.Write(json_bytes)
         io.Copy(ctx, &buf)
     } else{
@@ -118,6 +120,7 @@ func documentStream(ctx *web.Context, documentId string) {
         redis_conn.Do("SET", documentId, string(json_bytes))
         c := &hub.DocumentConnection{Send: make(chan hub.Message, 256), Ws: ws, H:document_hubs[doc.Name]}
         document_hubs[doc.Name].Register <- c
+        mainHub.Broadcast <- json_bytes
         go c.WritePump()
         c.ReadPump()
     } else{
@@ -211,7 +214,6 @@ func getDocuments(ctx *web.Context){
         documents[doc.Name] = doc
         fmt.Println("Document: ", doc.Name)
     }
-
 
     var buf bytes.Buffer
     json_bytes, _ := json.Marshal(documents)

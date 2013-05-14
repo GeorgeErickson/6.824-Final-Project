@@ -8,7 +8,7 @@ class Documents extends Backbone.Collection
   initialize: ->
     @ws = websocket.create '/ws'
     @ws.onmessage = (e) =>
-      console.log e
+      @add JSON.parse e.data
 
   parse: (response, options) ->
     _.values response
