@@ -33,11 +33,10 @@ class Editor extends Backbone.View
     @detachEvents()
     @editor.on 'change', @onchange
 
-  show: (model) ->
+  show: (model) =>
     @detachEvents()
+    @model = model
     @ot.setModel model
-
-
     @attachEvents()
     @$el.removeClass 'hide'
 
@@ -54,7 +53,9 @@ class Editor extends Backbone.View
       when "insertLines", "insertText" then @ot.trigger 'insert', data
       when "removeLines", "removeText" then @ot.trigger 'remove', data
 
-  hide: ->
+  hide: =>
+    if @model
+      @model.getSocket().close()
     @$el.addClass 'hide'
 
 
