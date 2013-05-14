@@ -2,10 +2,10 @@
 ===================
 
 ##Setup - Client
-- ```npm install -g yo```
-- ```npm install -g generator-angular```
-- ```npm install -g grunt-cli```
-- ```gem install compass```
+- ```cd src/server/client``` - ☹
+- ```npm install -g brunch```
+- ```gem install sass```
+- ```brunch b``` or ```brunch w```
 
 
 ##URLS
