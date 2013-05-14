@@ -4,6 +4,7 @@ import "fmt"
 import "server/document"
 import "encoding/json"
 import "github.com/garyburd/redigo/redis"
+import "os"
 
 // hub maintains the set of active connections and broadcasts messages to the
 // connections.
@@ -87,22 +88,31 @@ func (h *DocumentHub) Save(conn redis.Conn){
 	conn.Do("SET", h.Document.Name, string(json_bytes))
 }
 
-func getRedis() (redis.Conn, error) {
-    c, err := redis.Dial("tcp", "127.0.0.1:6379")
+func GetRedis() (redis.Conn, error) {
+    redis_tcp := "127.0.0.1:6379"
+
+    if os.Getenv("REDIS_TCP") != "" {
+      redis_tcp = os.Getenv("REDIS_TCP")
+    }
+    
+    c, err := redis.Dial("tcp", redis_tcp)
     if err != nil {
         panic(err)
     }
-    // if _, err := c.Do("AUTH", "davidgeorge"); err != nil {
-    //      c.Close()
-    //      return nil, err
-    // }
+    if os.Getenv("REDIS_AUTH") != "" {
+      if _, err := c.Do("AUTH", os.Getenv("REDIS_AUTH")); err != nil {
+           c.Close()
+           return nil, err
+      }
+    }
+
     return c, err
 }
 
 //Make the call to update the document object and propigate the results to other users
 //{"OpData":[[{"Insert":"abc", "Position":0}]],"Type":"Text","Name":"newDoc","Version":0,"Snapshot":"","Metadata":{"Creator":"","Ctime":"2013-04-29T14:59:36.346073-04:00","Mtime":"2013-04-29T14:59:36.346074-04:00","Sessions":{}}}
 func (h *DocumentHub) Run() {
-	redis_conn, _ := getRedis()
+	redis_conn, _ := GetRedis()
     //save document on close
     defer h.Save(redis_conn)
     defer redis_conn.Close()

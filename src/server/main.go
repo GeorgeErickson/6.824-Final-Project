@@ -59,7 +59,7 @@ func serveWs(ctx *web.Context) {
 }
 
 func setDocumentTitle(ctx *web.Context, documentId string){
-    redis_conn, _ := getRedis()
+    redis_conn, _ := hub.GetRedis()
     defer redis_conn.Close()
     
     //make new document at that stringId
@@ -84,7 +84,7 @@ func setDocumentTitle(ctx *web.Context, documentId string){
 }
 
 func deleteDocument(ctx *web.Context, documentId string){
-    redis_conn, _ := getRedis()
+    redis_conn, _ := hub.GetRedis()
     defer redis_conn.Close()
     
     //make new document at that stringId
@@ -121,7 +121,7 @@ func documentStream(ctx *web.Context, documentId string) {
         log.Println(err)
         return
     }
-    redis_conn, _ := getRedis()
+    redis_conn, _ := hub.GetRedis()
     defer redis_conn.Close()
     s, err := redis.String(redis_conn.Do("GET", documentId))
     //make new document at that stringId
@@ -174,7 +174,7 @@ func chatStream(ctx *web.Context, documentId string) {
         log.Println(err)
         return
     }
-    redis_conn, _ := getRedis()
+    redis_conn, _ := hub.GetRedis()
     defer redis_conn.Close()
     s, err := redis.String(redis_conn.Do("GET", documentId))
     //make new document at that stringId
@@ -219,7 +219,7 @@ func home(ctx *web.Context) {
 } 
 
 func getDocuments(ctx *web.Context){
-    c, _ := getRedis()
+    c, _ := hub.GetRedis()
     defer c.Close()
     s, _ := redis.Strings(c.Do("KEYS", "*"))
     fmt.Printf("%#v\n", s)
@@ -248,21 +248,10 @@ var mainHub = hub.Hub{
 		Connections: make(map[*hub.Connection]bool),
 	}
 
-func getRedis() (redis.Conn, error) {
-    c, err := redis.Dial("tcp", "127.0.0.1:6379")
-    if err != nil {
-        panic(err)
-    }
-    // if _, err := c.Do("AUTH", "davidgeorge"); err != nil {
-    //      c.Close()
-    //      return nil, err
-    // }
-    return c, err
-}
 
 func setupDocuments() map[string]hub.DocumentHub {
     d_hubs := map[string]hub.DocumentHub{}
-    c, _ := getRedis()
+    c, _ := hub.GetRedis()
     defer c.Close()
     s, _ := redis.Strings(c.Do("KEYS", "*"))
     var documents = map[string]document.Document{}
@@ -292,7 +281,7 @@ func setupDocuments() map[string]hub.DocumentHub {
 
 func setupChats() map[string]hub.ChatHub {
     d_hubs := map[string]hub.ChatHub{}
-    c, _ := getRedis()
+    c, _ := hub.GetRedis()
     defer c.Close()
     s, _ := redis.Strings(c.Do("KEYS", "*"))
     var documents = map[string]document.Document{}
