@@ -20,4 +20,10 @@ run_external:
 	export GOPATH=${GOPATH}; \
 	go run src/server/main.go localhost:8000
 
-.PHONY: setup, run, run_external, watch
+pdev: watch run
+
+dev:
+	${MAKE} -j2 pdev
+
+
+.PHONY: setup, run, run_external, watch, dev
