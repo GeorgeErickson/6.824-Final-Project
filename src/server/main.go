@@ -74,10 +74,7 @@ func documentStream(ctx *web.Context, documentId string) {
         log.Println(err)
         return
     }
-    redis_conn, err := redis.Dial("tcp", "pub-redis-11830.us-east-1-4.1.ec2.garantiadata.com:11830")
-    if err != nil {
-        panic(err)
-    }
+    redis_conn, _ := getRedis()
     defer redis_conn.Close()
     s, err := redis.String(redis_conn.Do("GET", documentId))
     //make new document at that stringId
@@ -129,10 +126,7 @@ func chatStream(ctx *web.Context, documentId string) {
         log.Println(err)
         return
     }
-    redis_conn, err := redis.Dial("tcp", ":6379")
-    if err != nil {
-        panic(err)
-    }
+    redis_conn, _ := getRedis()
     defer redis_conn.Close()
     s, err := redis.String(redis_conn.Do("GET", documentId))
     //make new document at that stringId
@@ -166,7 +160,7 @@ func chatStream(ctx *web.Context, documentId string) {
 
 
 func home(ctx *web.Context) { 
-    home, error := parseTemplate("client/public/index.html", map[string]string{"Url": ctx.Server.Config.Addr, "Port": strconv.Itoa(ctx.Server.Config.Port)})
+    home, error := parseTemplate("home.html", map[string]string{"Url": ctx.Server.Config.Addr, "Port": strconv.Itoa(ctx.Server.Config.Port)})
     var buf bytes.Buffer
     if error != nil {
     	buf.Write([]byte(error.Error()))
@@ -177,12 +171,9 @@ func home(ctx *web.Context) {
 } 
 
 func getDocuments(ctx *web.Context){
-    c, err := redis.Dial("tcp", ":6379")
-    if err != nil {
-        panic(err)
-    }
+    c, _ := getRedis()
     defer c.Close()
-    s, err := redis.Strings(c.Do("KEYS", "*"))
+    s, _ := redis.Strings(c.Do("KEYS", "*"))
     fmt.Printf("%#v\n", s)
     var documents = map[string]document.Document{}
     for _,str := range s {
@@ -210,14 +201,23 @@ var mainHub = hub.Hub{
 		Connections: make(map[*hub.Connection]bool),
 	}
 
-func setupDocuments() map[string]hub.DocumentHub {
-    d_hubs := map[string]hub.DocumentHub{}
+func getRedis() (redis.Conn, error) {
     c, err := redis.Dial("tcp", "pub-redis-11830.us-east-1-4.1.ec2.garantiadata.com:11830")
     if err != nil {
         panic(err)
     }
+    if _, err := c.Do("AUTH", "davidgeorge"); err != nil {
+         c.Close()
+         return nil, err
+    }
+    return c, err
+}
+
+func setupDocuments() map[string]hub.DocumentHub {
+    d_hubs := map[string]hub.DocumentHub{}
+    c, _ := getRedis()
     defer c.Close()
-    s, err := redis.Strings(c.Do("KEYS", "*"))
+    s, _ := redis.Strings(c.Do("KEYS", "*"))
     var documents = map[string]document.Document{}
     for _,str := range s {
         jdoc, err := redis.String(c.Do("GET", str))
@@ -245,12 +245,9 @@ func setupDocuments() map[string]hub.DocumentHub {
 
 func setupChats() map[string]hub.ChatHub {
     d_hubs := map[string]hub.ChatHub{}
-    c, err := redis.Dial("tcp", "pub-redis-11830.us-east-1-4.1.ec2.garantiadata.com:11830")
-    if err != nil {
-        panic(err)
-    }
+    c, _ := getRedis()
     defer c.Close()
-    s, err := redis.Strings(c.Do("KEYS", "*"))
+    s, _ := redis.Strings(c.Do("KEYS", "*"))
     var documents = map[string]document.Document{}
     for _,str := range s {
         jdoc, err := redis.String(c.Do("GET", str))

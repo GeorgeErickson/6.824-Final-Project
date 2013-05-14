@@ -87,13 +87,22 @@ func (h *DocumentHub) Save(conn redis.Conn){
 	conn.Do("SET", h.Document.Name, string(json_bytes))
 }
 
-//Make the call to update the document object and propigate the results to other users
-//{"OpData":[[{"Insert":"abc", "Position":0}]],"Type":"Text","Name":"newDoc","Version":0,"Snapshot":"","Metadata":{"Creator":"","Ctime":"2013-04-29T14:59:36.346073-04:00","Mtime":"2013-04-29T14:59:36.346074-04:00","Sessions":{}}}
-func (h *DocumentHub) Run() {
-	redis_conn, err := redis.Dial("tcp", "pub-redis-11830.us-east-1-4.1.ec2.garantiadata.com:11830")
+func getRedis() (redis.Conn, error) {
+    c, err := redis.Dial("tcp", "pub-redis-11830.us-east-1-4.1.ec2.garantiadata.com:11830")
     if err != nil {
         panic(err)
     }
+    if _, err := c.Do("AUTH", "davidgeorge"); err != nil {
+         c.Close()
+         return nil, err
+    }
+    return c, err
+}
+
+//Make the call to update the document object and propigate the results to other users
+//{"OpData":[[{"Insert":"abc", "Position":0}]],"Type":"Text","Name":"newDoc","Version":0,"Snapshot":"","Metadata":{"Creator":"","Ctime":"2013-04-29T14:59:36.346073-04:00","Mtime":"2013-04-29T14:59:36.346074-04:00","Sessions":{}}}
+func (h *DocumentHub) Run() {
+	redis_conn, _ := getRedis()
     //save document on close
     defer h.Save(redis_conn)
     defer redis_conn.Close()
