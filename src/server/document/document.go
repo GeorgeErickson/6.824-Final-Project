@@ -89,7 +89,6 @@ func (doc *Document) ApplyOp(op TextOp) bool {
 	}
 	for _, component := range op {
     	if component.Insert != "" {
-    		fmt.Println(doc.Snapshot, component.Position, component.Insert)
     		doc.Snapshot = doc.StrInject(doc.Snapshot, component.Position, component.Insert)
     	} else{
     		if(len(doc.Snapshot) < component.Position || len(doc.Snapshot) < component.Position + len(component.Delete)){
